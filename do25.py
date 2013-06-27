@@ -10,6 +10,7 @@ import lxml.html
 PROXIES = 'proxies'
 AGENTS = 'agents'
 
+RETRY=5
 def random_line(from_file):
     with open(from_file) as infile:
         cleaned = (line for line in infile if line.strip() and not line.startswith('#'))
@@ -21,7 +22,7 @@ def random_line(from_file):
         return line.strip()
 
 
-def get_markup(url):
+def get_markup(url, tries = 0):
     agent = random_line(AGENTS)
     headers = [('User-Agent', agent)]
     proxy = random_line(PROXIES).split(',')
@@ -42,7 +43,12 @@ def get_markup(url):
         return f.read()
     except (IOError, ValueError, TypeError), err:
         print url.strip() + " " + str(err).encode('UTF-8')
-        
+        if tries<=RETRY:
+            tries+=1
+            print " ... trying ["+str(tries)+"]"
+            return get_markup(url, tries)
+    return False
+
 
 def main(url):
     root = lxml.html.fromstring(get_markup(url))
